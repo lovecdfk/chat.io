@@ -671,3 +671,51 @@ body {
     margin-bottom: 0.5rem;
     color: var(--text-primary);
 }
+
+/* ── Username Login ──────────────────────────────────────── */
+.username-field {
+    margin-bottom: 1rem;
+}
+
+.username-field input {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 1rem;
+    color: #1e293b;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.username-field input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
+
+.username-field input::placeholder {
+    color: #94a3b8;
+}
+
+.join-btn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 0.3px;
+}
+
+.join-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(99,102,241,0.35);
+}
+
+.join-btn:active {
+    transform: translateY(0);
+}
