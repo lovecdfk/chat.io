@@ -1,14 +1,48 @@
 // Firebase Configuration
-// IMPORTANT: Replace these with your own Firebase config
+// ============================================================
+// STEP 1: Go to https://console.firebase.google.com
+// STEP 2: Create a project (or open existing one)
+// STEP 3: Click the </> Web icon to register your app
+// STEP 4: Copy your config values below
+// STEP 5: In Firebase Console → Authentication → Sign-in method
+//         → Enable "Google" provider
+// STEP 6: In Firebase Console → Realtime Database → Create database
+// STEP 7: Add your domain to Authentication → Settings → Authorized domains
+// ============================================================
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "YOUR_API_KEY",               // <- Replace this
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com", // <- Replace YOUR_PROJECT_ID
+    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com", // <- Replace YOUR_PROJECT_ID
+    projectId: "YOUR_PROJECT_ID",         // <- Replace this
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",  // <- Replace YOUR_PROJECT_ID
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // <- Replace this
+    appId: "YOUR_APP_ID"                  // <- Replace this
 };
+
+// Validate config before initializing
+const configIncomplete = Object.values(firebaseConfig).some(v => v.includes("YOUR_"));
+if (configIncomplete) {
+    document.body.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0f172a;font-family:sans-serif;">
+            <div style="background:#1e293b;padding:2.5rem;border-radius:16px;max-width:500px;text-align:center;border:1px solid #ef4444;">
+                <div style="font-size:3rem;margin-bottom:1rem;">🔧</div>
+                <h2 style="color:#f1f5f9;margin-bottom:1rem;">Firebase Setup Required</h2>
+                <p style="color:#94a3b8;margin-bottom:1.5rem;line-height:1.6;">
+                    You need to add your Firebase credentials to <code style="background:#0f172a;padding:2px 6px;border-radius:4px;color:#818cf8;">app.js</code> before the app will work.
+                </p>
+                <ol style="color:#94a3b8;text-align:left;line-height:2;padding-left:1.5rem;">
+                    <li>Go to <a href="https://console.firebase.google.com" target="_blank" style="color:#818cf8;">console.firebase.google.com</a></li>
+                    <li>Create or open your project</li>
+                    <li>Register a Web app (&lt;/&gt; icon)</li>
+                    <li>Copy the config into <strong style="color:#f1f5f9;">app.js</strong></li>
+                    <li>Enable <strong style="color:#f1f5f9;">Google</strong> in Authentication → Sign-in method</li>
+                    <li>Enable <strong style="color:#f1f5f9;">Realtime Database</strong></li>
+                </ol>
+            </div>
+        </div>
+    `;
+    throw new Error("Firebase config not set. Please replace placeholder values in app.js.");
+}
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
@@ -57,18 +91,73 @@ auth.onAuthStateChanged(user => {
     }
 });
 
+// Show a styled error message on the login card
+function showAuthError(message) {
+    let errorEl = document.getElementById('authError');
+    if (!errorEl) {
+        errorEl = document.createElement('div');
+        errorEl.id = 'authError';
+        errorEl.style.cssText = `
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 0.85rem 1rem;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            margin-top: 1rem;
+            text-align: left;
+        `;
+        document.querySelector('.login-card').appendChild(errorEl);
+    }
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+}
+
 // Google Sign In
 googleSignInBtn.addEventListener('click', async () => {
     try {
         googleSignInBtn.disabled = true;
         googleSignInBtn.innerHTML = '<div class="loading"></div> Signing in...';
+
+        // Hide any previous error
+        const prevError = document.getElementById('authError');
+        if (prevError) prevError.style.display = 'none';
         
         await auth.signInWithPopup(googleProvider);
     } catch (error) {
         console.error('Sign in error:', error);
-        alert('Sign in failed: ' + error.message);
+
+        // Friendly error messages for common auth errors
+        const errorMessages = {
+            'auth/popup-blocked':
+                '⚠️ Popup was blocked. Please allow popups for this site and try again.',
+            'auth/popup-closed-by-user':
+                '⚠️ Sign-in was cancelled. Please try again.',
+            'auth/unauthorized-domain':
+                '⚠️ This domain is not authorized. In Firebase Console → Authentication → Settings → Authorized domains, add this site\'s domain.',
+            'auth/operation-not-allowed':
+                '⚠️ Google sign-in is disabled. Go to Firebase Console → Authentication → Sign-in method and enable Google.',
+            'auth/network-request-failed':
+                '⚠️ Network error. Please check your internet connection.',
+            'auth/invalid-api-key':
+                '⚠️ Invalid API key. Check your firebaseConfig values in app.js.',
+            'auth/app-not-authorized':
+                '⚠️ App not authorized. Check your API key and authorized domains in Firebase Console.',
+        };
+
+        const friendlyMessage = errorMessages[error.code] || `⚠️ Sign in failed: ${error.message}`;
+        showAuthError(friendlyMessage);
+
         googleSignInBtn.disabled = false;
-        googleSignInBtn.innerHTML = 'Continue with Google';
+        googleSignInBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" width="20" height="20">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google`;
     }
 });
 
